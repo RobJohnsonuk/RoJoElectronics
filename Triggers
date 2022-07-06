@@ -1,0 +1,18 @@
+--trigger: populate_prod_ID
+USE [RoJoElectronics]
+GO
+/****** Object:  Trigger [dbo].[Populate_prod_ID] ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TRIGGER .[dbo].[Populate_prod_ID]
+   ON  .[dbo].[tbl_products]
+   AFTER INSERT,UPDATE
+AS
+BEGIN
+     SET NOCOUNT ON;
+declare @prodid varchar(12)
+set @prodid = (select (select upper (left (pc_category, 2))) + upper (left (p_mfr, 2)) +'_'+ (left (p_system_ref, 10)) from tbl_products, tbl_product_category where pc_system_ref = p_category and p_system_ref in (select max (p_system_ref) from tbl_products))
+update tbl_products set p_product_id = @prodid where p_system_ref in (select max (p_system_ref) from tbl_products)
+END
