@@ -1,0 +1,93 @@
+--Stored Procedure: update_audit_product
+--USE [RoJoElectronics]
+GO
+/****** Object:  StoredProcedure [dbo].[update_audit_product] ******/
+-- Description:     Procedure to copy product line to audit_products before line is updated
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[update_audit_product]
+     @p_product_id varchar (10) = 0,
+     @p_new_cost money = 0
+AS
+BEGIN
+     SET NOCOUNT ON;
+insert into tbl_audit_products
+(p_system_ref, p_category, p_product_id, p_mfr, p_name, p_original_cost, p_new_cost)
+select p_system_ref, p_category, p_product_id, p_mfr, p_name, p_cost, @p_new_cost from tbl_products where p_product_id = @p_product_id
+update tbl_audit_products set p_user_id = (select system_user) where p_product_id = @p_product_id
+update tbl_audit_products set p_timestamp = (GetDate()) where p_product_id = @p_product_id
+update tbl_products set p_cost = @p_new_cost where p_product_id = @p_product_id
+END
+
+------
+
+---------------
+--Stored Procedure: DailySalesToToday
+--USE [RoJoElectronics]
+GO
+/****** Object:  StoredProcedure [dbo].[update_audit_product] ******/
+-- Description:     Procedure to populate the sales table, with a random number of sales per day since the last date of sale
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[DailySalesToToday]
+
+AS
+BEGIN
+    SET NOCOUNT ON;
+    declare  @lastsaledate date
+		,@NumberOfSales int
+		,@invitems int
+		,@salespersonref int
+	  ,@customerref int
+		,@customername varchar(255)
+		,@salesperson varchar(255)
+		,@invref int
+		,@cnt int
+		,@productref int
+		,@qty int
+		,@itemref int
+set @lastsaledate = (select max(s_date)+1 from tbl_sales)
+set @cnt = 0
+set @invref = (select max(s_inv_ref) from tbl_sales)
+set @productref = (SELECT convert(numeric(10,0),FLOOR(RAND()*((select count(p_system_ref) from tbl_products)-1+1)+1)))
+set @qty = (SELECT convert(numeric(10,0),FLOOR(RAND()*(10-1+1)+1)))
+set @itemref = 1
+
+WHILE @lastsaledate < GetDate()
+BEGIN
+	PRINT concat ('Last Sale Date:' ,@lastsaledate)
+		set @NumberOfSales = (SELECT convert(numeric(10,0),FLOOR(RAND()*(10-1+1)+1)))
+		set @invref = (select max(s_inv_ref)+1 from tbl_sales)
+		
+		WHILE @NumberOfSales > 0
+		BEGIN
+			set @invitems = (SELECT convert(numeric(10,0),FLOOR(RAND()*(10-1+1)+1)))
+			set @salespersonref = (SELECT convert(numeric(10,0),FLOOR(RAND()*((select count(sp_system_ref) from tbl_sales_people)-1+1)+1)))
+			set @customerref = (SELECT convert(numeric(10,0),FLOOR(RAND()*((select count(c_system_ref) from tbl_customers)-1+1)+1)))
+			PRINT concat ('Number of invoices to add today:', @numberofsales)
+			PRINT concat ('Number of Items on Invoice ',@invref,': ',@invitems)
+				WHILE @cnt < @invitems
+				BEGIN
+
+					set @productref = (SELECT convert(numeric(10,0),FLOOR(RAND()*((select count(p_system_ref) from tbl_products)-1+1)+1)))
+					set @qty = (SELECT convert(numeric(10,0),FLOOR(RAND()*(10-1+1)+1)))
+					
+						--PRINT concat ('[',@salespersonref,']-[',@lastsaledate,']-[', @invref,']-[',@itemref,']-[',@productref,']-[', @qty,']-[', @customerref,']')
+
+						insert into tbl_sales (s_sp_ref, s_date, s_inv_ref, s_item_ref, s_p_ref, s_qty, s_c_ref)
+						values (@salespersonref,@lastsaledate, @invref,@itemref,@productref, @qty, @customerref)
+
+					SET @itemref = @itemref + 1
+					SET @cnt = @cnt + 1
+				END
+			SET @itemref = 1
+			SET @cnt = 0
+			SET @NumberOfSales = @NumberOfSales -1
+			set @invref = (select max(s_inv_ref)+1 from tbl_sales)
+		END
+	SET @lastsaledate = DATEADD(DAY, 1, @lastsaledate)
+END
+END
