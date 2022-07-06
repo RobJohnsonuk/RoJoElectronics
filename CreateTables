@@ -1,0 +1,106 @@
+create table tbl_sales_people
+        (
+               sp_system_ref int IDENTITY(1,1),
+               sp_title varchar (5),
+               sp_fname varchar (Max),
+               sp_surname varchar (Max),
+        )
+Go
+create table tbl_staff_addresses
+     (
+          sa_system_ref int IDENTITY(1,1),
+          sa_houseno int ,
+          sa_street varchar (Max),
+          sa_address1 varchar (Max),
+          sa_address2 varchar (Max),
+          sa_address3 varchar (Max),
+          sa_postcode varchar (Max),
+          sa_telephone1 varchar (12),
+          sa_telephone2 varchar (12),
+          sa_email varchar (Max)
+     )
+Go
+create table tbl_products
+     (
+          p_system_ref int IDENTITY(1,1),
+          p_category int ,
+       p_product_id varchar (12),
+          p_mfr varchar (Max),
+          p_name varchar (Max),
+          p_cost money,
+	  p_stock int,
+	  p_sell money
+     )
+Go
+create table tbl_product_category
+     (
+          pc_system_ref int IDENTITY(1,1),
+          pc_Category varchar (Max)
+     )
+Go
+create table tbl_sales
+     (
+          s_system_ref int IDENTITY(1,1),
+          s_sp_ref int ,
+          s_date datetime ,
+          s_inv_ref int ,
+          s_item_ref int ,
+          s_p_ref int ,
+          s_qty int,
+          s_c_ref int
+     )
+Go
+create table tbl_customers
+     (
+          c_system_ref int IDENTITY(1,1),
+          c_FirstName varchar (Max),
+          c_MiddleName varchar (Max),
+          c_LastName varchar (Max),
+	        c_house_num varchar (Max),
+          c_address1 varchar (Max),
+          c_address2 varchar (Max),
+          c_address3 varchar (Max),
+          c_address4 varchar (Max),
+          c_postcode varchar (Max),
+	        c_county varchar (Max),
+	        c_telephone1 varchar (Max),
+	        c_telephhone2 varchar (Max),
+	        c_email varchar (Max)
+     )
+Go
+create table tbl_monitor
+        (
+           tm_system_ref int IDENTITY(1,1),
+           tm_name varchar (Max),
+           tm_updated datetime,
+           tm_updated_by varchar (Max)
+        )
+Go
+create table tbl_params
+     (
+          param_name varchar (50) NOT NULL PRIMARY KEY,
+          param_val varchar (255) NOT NULL,
+          param_description varchar (255) NOT NULL
+     )
+Go
+create table tbl_audit_products
+     (
+	        p_audit_ref int IDENTITY(1,1),
+	        p_system_ref int NOT NULL,
+          p_category int ,
+          p_product_id varchar (12),
+          p_mfr varchar (Max),
+          p_name varchar (Max),
+          p_original_cost money,
+          p_new_cost money,
+          p_user_id varchar (100),
+          p_timestamp datetime
+     )
+Go
+create table tbl_login
+     (
+          ID int IDENTITY(1,1),
+          Username varchar (Max) NOT NULL,
+	        PasswordHash BINARY(64) NOT NULL,
+     )
+Go
