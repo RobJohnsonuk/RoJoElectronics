@@ -1,0 +1,102 @@
+create view [vw_sales_detail] as
+select s.s_system_ref as 'Sales Ref' ,
+               ((sp.sp_fname) + ' ' + (sp.sp_surname)) as 'Sales Person',
+               --c.c_companyname as 'Customer',
+               s.s_date as 'Date of Sale',
+               s.s_inv_ref as 'Invoice Ref',
+               s.s_item_ref as 'Item Ref',
+               ((p.p_mfr) + ' ' + (p.p_name)) as 'Product Name' ,
+               s.s_qty as 'Quantity',
+               p.p_cost as 'Item Cost',
+               (select s.s_qty * p.p_cost) as 'Line Total'
+from   tbl_sales s
+               inner join tbl_sales_people sp on s.s_sp_ref = sp.sp_system_ref
+               inner join tbl_products p on s.s_p_ref = p.p_system_ref
+               inner join tbl_customers c on s.s_c_ref = c.c_system_ref
+go
+---------------
+create view [vw_invoice_detail] as
+select s.s_inv_ref as 'Inv. Ref',
+count (s.s_item_ref) as 'No. Items' ,
+sum (s.s_qty) as 'Quantity' ,
+sum (s.s_qty * p.p_cost ) as 'Inv. Value'
+from tbl_sales s inner join tbl_products p on s.s_p_ref = p.p_system_ref
+group by s.s_inv_ref
+go
+---------------
+create view [vw_products_sold] as
+select s.s_p_ref as 'Product Ref',
+               (p.p_mfr + ' ' + p.p_name) as 'Product' ,
+        sum (s.s_qty ) as 'No. Sold' ,
+               p.p_cost as 'Cost',
+        sum (s.s_qty * p.p_cost ) as 'Value Sold'
+from tbl_sales s
+        inner join tbl_products p on s.s_p_ref = p.p_system_ref
+group by s.s_p_ref, p.p_mfr, p.p_name, p.p_cost
+go
+---------------
+create view [vw_salespeople] as
+select s.s_sp_ref as 'SP Ref',
+               (sp.sp_fname + ' ' + sp_surname) as 'Sales Person' ,
+               count (s.s_inv_ref) as 'No. Sales' ,
+               sum (s.s_qty * p.p_cost) as 'Value of Sales'
+from tbl_sales s
+               inner join tbl_sales_people sp on s_sp_ref = sp_system_ref
+               inner join tbl_products p on s.s_p_ref = p.p_system_ref
+group by s.s_sp_ref, sp.sp_fname, sp.sp_surname
+go
+---------------
+create view [vw_customer_orders] as
+select s.s_c_ref as 'Customer Ref',
+               --c.c_name as 'Customer Name',
+               count (s.s_inv_ref) as 'No. Orders' ,
+               sum (s.s_qty * p.p_cost) as 'Value of Orders'
+from tbl_sales s
+               inner join tbl_customers c on s_c_ref = c_system_ref
+               inner join tbl_products p on s_p_ref = p_system_ref
+group by s.s_c_ref--, c.c_name
+go
+---------------
+create view [vw_sales_by_month] as
+select DateName (Year , s.s_date ) as 'Year',
+               DateName ( Month, s.s_date) as 'Month' ,
+               count ( s.s_inv_ref) as 'Sales Count' ,
+               sum ( s.s_qty * p.p_cost) as 'Value of Sales'
+from tbl_sales s
+               inner join tbl_products p on s.s_p_ref = p.p_system_ref
+group by DateName (Year, s.s_date), DateName (MONTH ,s.s_date)
+go
+---------------
+create view [vw_sales_by_salesperson] as
+select sp.sp_fname + ' '+ sp.sp_surname as 'Sales Person',
+               DateName ( Month, s.s_date) as 'Month' ,
+               count ( s.s_inv_ref) as 'No. Sales' ,
+               sum ( s.s_qty * p.p_cost) as 'Value of Sales'
+from tbl_sales s
+               inner join tbl_products p on s.s_p_ref = p.p_system_ref
+               inner join tbl_sales_people sp on s.s_sp_ref = sp.sp_system_ref
+group by sp.sp_fname, sp.sp_surname, DateName (Month, s.s_date)
+go
+---------------
+create view [vw_products_by_month] as
+select s.s_p_ref as 'Product Ref',
+               p.p_mfr + ' ' + p.p_name as 'Product Name',
+               DateName ( month, s.s_date) as 'Month' ,
+               sum ( s.s_qty) as 'No. Sold' ,
+               sum ( s.s_qty * p.p_cost) as 'Value Sold'
+from tbl_sales s
+        inner join tbl_products p on s.s_p_ref = p.p_system_ref
+group by s.s_p_ref, p.p_mfr, p.p_name, DateName (month, s.s_date)
+go
+---------------
+create view [vw_customers_by_month] as
+select s.s_c_ref as 'Customer Ref',
+               --c_name as 'Customer Name',
+               DateName ( month, s.s_date) as 'Month' ,
+               count ( s.s_inv_ref) as 'No. of Orders' ,
+               sum ( s.s_qty * p.p_cost) as 'Value of Orders'
+from   tbl_sales s
+               inner join tbl_products p on s.s_p_ref = p.p_system_ref
+               inner join tbl_customers c on s.s_c_ref = c.c_system_ref
+group by s.s_c_ref, /*c_name,*/ DateName (month, s.s_date)
+go
